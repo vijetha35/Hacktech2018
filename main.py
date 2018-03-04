@@ -10,12 +10,15 @@ app = Flask(__name__)
 
 # Your Account SID from twilio.com/console
 #account_sid = "AC1461e56cf2e8ac12cf643c44aa281fd6"
-account_sid = "ACcf2f3a7354f881c369416235b6f87553"
+account_sid = "ACcf2f3a7354f881c369416235b6f87553" #new number
+
 # Your Auth Token from twilio.com/console
 #auth_token = "1e126e8e87c7641c85649359b58f4e9c"
-auth_token = "9840792f8886bcca9abd2fa24e1c0c9e"
-client = Client(account_sid, auth_token)
+auth_token = "9840792f8886bcca9abd2fa24e1c0c9e" #new number
 
+client = Client(account_sid, auth_token)
+new_number  = "+17864206890"
+old_number  = "+18705764157"
 
 @app.route("/getMessage", methods=['GET', 'POST'])
 def getMessage():
@@ -24,6 +27,9 @@ def getMessage():
     patient = request.values.get('From')
     user_message = request.values.get('Body')
     image = request.values.get('MediaContentType0')
+    fromcity = request.values.get('FromCity') if request.values.get('FromCity') else "Unknown"
+    fromzip = request.values.get('FromZip') if request.values.get('FromZip') else "Unknown"
+
     if image:
         image_url =  request.values.get('MediaUrl0')
         print(image_url,file=sys.stderr)
@@ -31,11 +37,26 @@ def getMessage():
     else:
         ailment = get_text_ailment(str(user_message))
 
-    #message = client.messages.create(to=patient, from_="+18705764157", body=get_aid(ailment))
-    message = client.messages.create(to=patient, from_="+17864206890", body=get_aid(ailment))
+    #message = client.messages.create(to=patient, from_=old_number, body=get_aid(ailment)) # Old Call
+    #message = client.messages.create(to=patient, from_=new_number, body=get_aid(ailment))
+
+    emergency_contact = "+12132699074"
+    if ailment == 'Hostiles':
+        message = client.messages.create(to=emergency_contact, from_=new_number,
+                                         body="Hostiles spotted in {0} at pincode {1} \n reported by {2}".format(fromcity,fromzip,patient))
+        message = client.messages.create(to=patient, from_=new_number, body="Police Authorities of nearby location have been alerted, get cover and try moving to a safe location")
+    elif ailment =='Fire':
+        message = client.messages.create(to=emergency_contact, from_=new_number,
+                                         body=" Fire/Bombarding in {0} at pincode {1} \n reported by {2}".format(fromcity, fromzip,patient))
+        message = client.messages.create(to=patient, from_=new_number, body="Fire Authorities of nearby location have been alerted,\n Stay away from the fire")
+
+    else:
+        message = client.messages.create(to=patient, from_=new_number, body=get_aid(ailment))
+
+    #message = client.messages.create(to=patient, from_=old_number, body=get_aid(ailment))
 
 
-    return "Success"
+    return "<?xml version='1.0' encoding='UTF-8'?> <message>Success</message>"
 
 
 
